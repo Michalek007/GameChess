@@ -90,6 +90,601 @@ void ChessPieces::Set_Symbols(){
     }
 }
 
+
+ChessPieces ChessPieces::TypeOfPieces(int x, int y, vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV, Color color)
+{
+    if (color == black)
+    {
+        for (int i = 0; i < blackV.size(); i++)
+        {
+            if (blackV[i].AllowedMoves(x, y, whiteV, blackV, color, 0) == true)
+            {
+                return blackV[i];
+            }
+        }
+    }
+    if (color == white)
+    {
+        for (int i = 0; i < whiteV.size(); i++)
+        {
+            if (whiteV[i].AllowedMoves(x, y, whiteV, blackV, color, 0) == true)
+            {
+                return whiteV[i];
+            }
+        }
+    }
+    return blackV[0];
+}
+
+bool ChessPieces::Mate(vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV, Color color)
+{
+    Matrix mate_matrix;
+    if (color == white) {
+        for (int o = 0; o < blackV.size(); o++) {
+            mate_matrix = blackV[o].AllowedMoves(whiteV, blackV, black, 0);
+            blackV[o].AllowedMoves(mate_matrix, whiteV, blackV);
+            for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                    if (mate_matrix[i][j] == true) {
+                        return false;
+                    }
+                }
+            }
+            mate_matrix.clear();
+        }
+    }
+    if (color == black) {
+        for (int o = 0; o < whiteV.size(); o++) {
+            mate_matrix = whiteV[o].AllowedMoves(whiteV, blackV, black, 0);
+            whiteV[o].AllowedMoves(mate_matrix, whiteV, blackV);
+            for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                    if (mate_matrix[i][j] == true) {
+                        return false;
+                    }
+                }
+            }
+            mate_matrix.clear();
+        }
+    } 
+    return true;
+}
+
+void ChessPieces::Take(int x, int y, vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV, Color color, string& str) {
+    if (color == white) {
+        for (size_t i = 0; i < blackV.size(); i++) {
+            if (blackV[i].X == x && blackV[i].Y == y) {
+                str = blackV[i].ID;
+                str.pop_back();
+                str.pop_back();
+                blackV.erase(blackV.begin() + i);
+            }
+        }
+    }
+    if (color == black) {
+        for (size_t i = 0; i < whiteV.size(); i++) {
+            if (whiteV[i].X == x && whiteV[i].Y == y) {
+                str = whiteV[i].ID;
+                str.pop_back();
+                str.pop_back();
+                whiteV.erase(whiteV.begin() + i);
+            }
+        }
+    }
+}
+
+void ChessPieces::Promotion() {
+    Interface::Promotion(*this);
+};
+
+void ChessPieces::QBR(int c, Matrix& matrix, vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV) {
+    vector< ChessPieces > all;
+    for (int i = 0; i < whiteV.size(); i++) {
+        if (X == whiteV[i].X && Y == whiteV[i].Y) {}
+        else {
+            all.push_back(whiteV[i]);
+        }
+    }
+    for (int i = 0; i < blackV.size(); i++) {
+        if (X == blackV[i].X && Y == blackV[i].Y) {}
+        else {
+            all.push_back(blackV[i]);
+        }
+    }
+    if (c == 0) {
+        for (int o = 1; o < 9 - X; o++)
+        {
+            for (int a = 0; a < all.size(); a++)
+            {
+                matrix[X + o - 1][Y - 1] = true;
+                if (all[a].X == X + o && all[a].Y == Y)
+                {
+                    //matrix[X + o][Y] = false;
+                    return;
+                }
+            }
+        }
+    }
+    if (c == 1) {
+        for (int o = 1; o < X; o++)
+        {
+            for (int a = 0; a < all.size(); a++)
+            {
+                matrix[X - o - 1][Y - 1] = true;
+                if (all[a].X == X - o && all[a].Y == Y)
+                {
+                    //matrix[X - o][Y] = false;
+                    return;
+                }
+            }
+        }
+    }
+    if (c == 2) {
+        for (int o = 1; o < 9 - Y; o++)
+        {
+            for (int a = 0; a < all.size(); a++)
+            {
+                matrix[X - 1][Y + o - 1] = true;
+                if (all[a].X == X && all[a].Y == Y + o)
+                {
+                    //matrix[X][Y + o] = false;
+                    return;
+                }
+            }
+        }
+    }
+    if (c == 3) {
+        for (int o = 1; o < Y; o++)
+        {
+            for (int a = 0; a < all.size(); a++)
+            {
+                matrix[X - 1][Y - o - 1] = true;
+                if (all[a].X == X && all[a].Y == Y - o)
+                {
+                    //matrix[X][Y - o] = false;
+                    return;
+                }
+            }
+        }
+    }
+    if (c == 4) {
+        for (int o = 1; o < 9; o++)
+        {
+            for (int a = 0; a < all.size(); a++)
+            {
+                if (X + o > 8 || Y + o > 8) {
+                    return;
+                }
+                matrix[X + o - 1][Y + o - 1] = true;
+                if (all[a].X == X + o && all[a].Y == Y + o)
+                {
+                    //matrix[X + o][Y] = false;
+                    return;
+                }
+            }
+        }
+    }
+    if (c == 5) {
+        for (int o = 1; o < 9; o++)
+        {
+            for (int a = 0; a < all.size(); a++)
+            {
+                if (X - o < 1 || Y - o < 1) {
+                    return;
+                }
+                matrix[X - o - 1][Y - o - 1] = true;
+                if (all[a].X == X - o && all[a].Y == Y - o)
+                {
+                    //matrix[X + o][Y] = false;
+                    return;
+                }
+            }
+        }
+    }
+    if (c == 6) {
+        for (int o = 1; o < 9; o++)
+        {
+            for (int a = 0; a < all.size(); a++)
+            {
+                if (X + o > 8 || Y - o < 1) {
+                    return;
+                }
+                matrix[X + o - 1][Y - o - 1] = true;
+                if (all[a].X == X + o && all[a].Y == Y - o)
+                {
+                    //matrix[X + o][Y] = false;
+                    return;
+                }
+            }
+        }
+    }
+    if (c == 7) {
+        for (int o = 1; o < 9; o++)
+        {
+            for (int a = 0; a < all.size(); a++)
+            {
+                if (X - o < 1 || Y + o > 8) {
+                    return;
+                }
+                matrix[X - o - 1][Y + o - 1] = true;
+                if (all[a].X == X - o && all[a].Y == Y + o)
+                {
+                    //matrix[X + o][Y] = false;
+                    return;
+                }
+            }
+        }
+    }
+}
+Matrix ChessPieces::AllowedMoves(vector<ChessPieces>& white, vector<ChessPieces>& black, Color color, int use) {
+    vector<bool> vec {false, false, false, false, false, false, false, false };
+    Matrix moves {vec,vec,vec,vec,vec,vec,vec,vec };
+    //vec.resize(8);
+    //for (int i = 0; i < 8; i++) {
+    //   vec.push_back(false);
+    //}
+    //for (int i = 0; i < 8; i++) {
+    //    moves.push_back(vec);
+    //}
+    int x, y;
+    x = X - 1;
+    y = Y - 1;
+    if (this->fType == queen || this->fType == rook)
+    {
+        this->QBR(0, moves, white, black);
+        this->QBR(1, moves, white, black);
+        this->QBR(2, moves, white, black);
+        this->QBR(3, moves, white, black);
+
+        if (this->fType == rook) {
+            return moves;
+        }
+    }
+    if (this->fType == queen || this->fType == bishop)
+    {
+        this->QBR(4, moves, white, black);
+        this->QBR(5, moves, white, black);
+        this->QBR(6, moves, white, black);
+        this->QBR(7, moves, white, black);
+        return moves;
+    }
+    if (this->fType == king)
+    {
+        if (y + 1 < 8) {
+            moves[x][y + 1] = true;
+        }
+        if (y - 1 > -1) {
+            moves[x][y - 1] = true;
+        }
+        if (x + 1 < 8) {
+            moves[x + 1][y] = true;
+        }
+        if (x - 1 > -1) {
+            moves[x - 1][y] = true;
+        }
+        if ((x + 1 < 8) && (y + 1 < 8)) {
+            moves[x + 1][y + 1] = true;
+        }
+        if ((x - 1 > -1) && (y - 1 > -1)) {
+            moves[x - 1][y - 1] = true;
+        }
+        if ((x + 1 < 8) && (y - 1 > -1)) {
+            moves[x + 1][y - 1] = true;
+        }
+        if ((x - 1 > -1) && (y + 1 < 8)) {
+            moves[x - 1][y + 1] = true;
+        }
+        return moves;
+    }
+    if (fType == knight)
+    {
+        if ((x + 2 < 8) && (y + 1 < 8)) {
+            moves[x + 2][y + 1] = true;
+        }
+        if ((x - 2 > -1) && (y - 1 > -1)) {
+            moves[x - 2][y - 1] = true;
+        }
+        if ((x + 2 < 8) && (y - 1 > -1)) {
+            moves[x + 2][y - 1] = true;
+        }
+        if ((x - 2 > -1) && (y + 1 < 8)) {
+            moves[x - 2][y + 1] = true;
+        }
+        if ((x + 1 < 8) && (y + 2 < 8)) {
+            moves[x + 1][y + 2] = true;
+        }
+        if ((x - 1 > -1) && (y - 2 > -1)) {
+            moves[x - 1][y - 2] = true;
+        }
+        if ((x + 1 < 8) && (y - 2 > -1)) {
+            moves[x + 1][y - 2] = true;
+        }
+        if ((x - 1 > -1) && (y + 2 < 8)) {
+            moves[x - 1][y + 2] = true;
+        }
+        return moves;
+
+
+    }
+    if (fType == pone)
+    {
+        if (use == 0)
+        {
+            if (color == 0)
+            {
+                if (!enPassant.empty()) {
+                    int ep = enPassant[1] - 96;
+                    if (X + 1 == ep || X - 1 == ep) {
+                        if (Y == 5) {
+                            moves[ep - 1][5] = true;
+                        }
+                    }
+                }
+                moves[x][y + 1] = true;
+                for (int i = 0; i < black.size(); i++)
+                {
+                    if (black[i].X == x + 1 && black[i].Y == y + 1 + 1)
+                    {
+                        moves[x][y + 1] = false;
+                    }
+                }
+                for (int i = 0; i < white.size(); i++)
+                {
+                    if (white[i].X == x + 1 && white[i].Y == y + 1 + 1)
+                    {
+                        moves[x][y + 1] = false;
+                    }
+                }
+                for (int i = 0; i < black.size(); i++)
+                {
+                    if (black[i].X == x - 1 + 1 && black[i].Y == y + 1 + 1)
+                    {
+                        moves[x - 1][y + 1] = true;
+                    }
+                    if (black[i].X == x + 1 + 1 && black[i].Y == y + 1 + 1)
+                    {
+                        moves[x + 1][y + 1] = true;
+                    }
+                }
+                if (y == 1)
+                {
+                    moves[x][y + 2] = true;
+                    for (int i = 0; i < black.size(); i++)
+                    {
+                        if (black[i].X == x + 1 && black[i].Y == y + 2 + 1)
+                        {
+                            moves[x][y + 2] = false;
+                        }
+                        if (black[i].X == x + 1 && black[i].Y == y + 1 + 1)
+                        {
+                            moves[x][y + 2] = false;
+                        }
+
+                    }
+                    for (int i = 0; i < white.size(); i++)
+                    {
+                        if (white[i].X == x + 1 && white[i].Y == y + 2 + 1)
+                        {
+                            moves[x][y + 2] = false;
+                        }
+                        if (white[i].X == x + 1 && white[i].Y == y + 1 + 1)
+                        {
+                            moves[x][y + 2] = false;
+                        }
+                    }
+                }
+            }
+            if (color == 1)
+            {
+                if (!enPassant.empty()) {
+                    int ep = enPassant[1] - 96;
+                    if (X + 1 == ep || X - 1 == ep) {
+                        if (Y == 4) {
+                            moves[ep - 1][3] = true;
+                        }
+                    }
+                }
+                moves[x][y - 1] = true;
+                for (int i = 0; i < white.size(); i++)
+                {
+                    if (white[i].X == x + 1 && white[i].Y == y - 1 + 1)
+                    {
+                        moves[x][y - 1] = false;
+                    }
+                }
+                for (int i = 0; i < black.size(); i++)
+                {
+                    if (black[i].X == x + 1 && black[i].Y == y - 1 + 1)
+                    {
+                        moves[x][y - 1] = false;
+                    }
+                }
+                for (int i = 0; i < white.size(); i++)
+                {
+                    if (white[i].X == x - 1 + 1 && white[i].Y == y - 1 + 1)
+                    {
+                        moves[x - 1][y - 1] = true;
+                    }
+                    if (white[i].X == x + 1 + 1 && white[i].Y == y - 1 + 1)
+                    {
+                        moves[x + 1][y - 1] = true;
+                    }
+                }
+                if (y == 6)
+                {
+                    moves[x][y - 2] = true;
+                    for (int i = 0; i < white.size(); i++)
+                    {
+                        if (white[i].X == x + 1 && white[i].Y == y - 2 + 2)
+                        {
+                            moves[x][y - 2] = false;
+                        }
+                        if (white[i].X == x + 1 && white[i].Y == y - 2 + 1)
+                        {
+                            moves[x][y - 2] = false;
+                        }
+                    }
+                    for (int i = 0; i < black.size(); i++)
+                    {
+                        if (black[i].X == x + 1 && black[i].Y == y - 2 + 2)
+                        {
+                            moves[x][y - 2] = false;
+                        }
+                        if (black[i].X == x + 1 && black[i].Y == y - 2 + 1)
+                        {
+                            moves[x][y - 2] = false;
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+        else
+        {
+            if (color == 0)
+            {
+                if (x + 1 < 8) {
+                    moves[x + 1][y + 1] = true;
+                }
+                if (x - 1 > -1) {
+                    moves[x - 1][y + 1] = true;
+                }
+            }
+            if (color == 1)
+            {
+                if (x + 1 < 8) {
+                    moves[x + 1][y - 1] = true;
+                }
+                if (x - 1 > -1) {
+                    moves[x - 1][y - 1] = true;
+                }
+            }
+        }
+        return moves;
+    }
+    return moves;
+}
+void ChessPieces::AllowedMoves(Matrix& matrix, vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV) {
+    for (int i = 0; i < 8; i++) {
+        for (int o = 0; o < 8; o++) {
+            if (fColor == white && !AllowedMovesKing(whiteV[0].X, whiteV[0].Y, whiteV, blackV, black)) {
+                ChessPieces check = TypeOfPieces(whiteV[0].X, whiteV[0].Y, whiteV, blackV, black);
+                int a{}, b{};
+                a = check.X;
+                b = check.Y;
+                if (fType == king) {
+                    if (matrix[i][o] == true) {
+                        if (AllowedMovesKing(i + 1, o + 1, whiteV, blackV, black) == false) {
+                            matrix[i][o] = false;
+                        }
+                    }
+                }
+                if (fType != king && this->Block(i + 1, o + 1, whiteV, blackV, fColor, 1) == false) {
+                    matrix[i][o] = false;
+                }
+                if (fColor == white && AllowedMoves(i + 1, o + 1, whiteV) == false) {
+                    matrix[i][o] = false;
+                }
+                if (fType != king) {
+                    if (this->Cover(i + 1, o + 1, check, whiteV[0], whiteV, blackV) == true || (i + 1 == a && o + 1 == b)) {
+
+                    }
+                    else {
+                        matrix[i][o] = false;
+                    }
+                }
+            }
+            if (fColor == black && !AllowedMovesKing(blackV[0].X, blackV[0].Y, whiteV, blackV, white)) {
+                ChessPieces check = TypeOfPieces(blackV[0].X, blackV[0].Y, whiteV, blackV, white);
+                int a{}, b{};
+                a = check.X;
+                b = check.Y;
+                if (fType == king) {
+                    if (matrix[i][o] == true) {
+                        if (AllowedMovesKing(i + 1, o + 1, whiteV, blackV, white) == false) {
+                            matrix[i][o] = false;
+                        }
+                    }
+                }
+                if (fType != king && this->Block(i + 1, o + 1, whiteV, blackV, fColor, 1) == false) {
+                    matrix[i][o] = false;
+                }
+                if (fColor == black && AllowedMoves(i + 1, o + 1, blackV) == false) {
+                    matrix[i][o] = false;
+                }
+                if (fType != king) {
+                    if (this->Cover(i + 1, o + 1, check, blackV[0], whiteV, blackV) == true || (i + 1 == a && o + 1 == b)) {
+
+                    }
+                    else {
+                        matrix[i][o] = false;
+                    }
+                }
+            }
+            if (fType == king) {
+                if (matrix[i][o] == true) {
+                    Color ffColor {white};
+                    if (fColor == white) {
+                        if (castleLW == true && CastleL(3, 1, whiteV, blackV, fColor) == true) {
+                            if (matrix[2][0] == false) {
+                                matrix[2][0] = true;
+                            }
+                        }
+                        if (castleRW == true && Castle(7, 1, whiteV, blackV, fColor) == true) {
+                            if (matrix[6][0] == false) {
+                                matrix[6][0] = true;
+                            }
+                        }
+                        ffColor = black;
+                    }
+                    if (fColor == black) {
+                        if (castleLB == true && CastleL(3, 8, whiteV, blackV, fColor) == true) {
+                            if (matrix[2][7] == false) {
+                                matrix[2][7] = true;
+                            }
+                        }
+                        if (castleRB == true && Castle(7, 8, whiteV, blackV, fColor) == true) {
+                            if (matrix[6][7] == false) {
+                                matrix[6][7] = true;
+                            }
+                        }
+                        ffColor = white;
+                    }
+                    if (AllowedMovesKing(i + 1, o + 1, whiteV, blackV, ffColor) == false) {
+                        matrix[i][o] = false;
+                    }
+                }
+            }
+            if (fType != king && this->Block(i + 1, o + 1, whiteV, blackV, fColor, 0) == false) {
+                matrix[i][o] = false;
+            }
+            if (fColor == white && AllowedMoves(i + 1, o + 1, whiteV) == false) {
+                matrix[i][o] = false;
+            }
+            if (fColor == black && AllowedMoves(i + 1, o + 1, blackV) == false) {
+                matrix[i][o] = false;
+            }
+        }
+    }
+}
+
+vector<string> ChessPieces::AllowedMoves(Matrix& matrix) {
+    vector<string> vec;
+    for (int i = 0; i < 8; i++) {
+        for (int o = 0; o < 8; o++) {
+            if (matrix[i][o] == true) {
+                char c1 = i + 1 + 96;
+                char c2 = o + 1 + 48;
+                string str;
+                str.push_back(c1);
+                str.push_back(c2);
+                vec.push_back(str);
+            }
+        }
+    }
+    return vec;
+}
+
 //jesli sprawdzamy dla figury koloru bia³ego to wstwiamy wektor bia³ych figur(analogicznie dla czarnych)
 bool ChessPieces::AllowedMoves(int x, int y, vector<ChessPieces>& pieces)
 {
@@ -1136,597 +1731,4 @@ bool ChessPieces::Cover(int x, int y, ChessPieces& piece, ChessPieces& king, vec
         return false;
     }
     return false;
-}
-
-ChessPieces ChessPieces::TypeOfPieces(int x, int y, vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV, Color color)
-{
-    if (color == black)
-    {
-        for (int i = 0; i < blackV.size(); i++)
-        {
-            if (blackV[i].AllowedMoves(x, y, whiteV, blackV, color, 0) == true)
-            {
-                return blackV[i];
-            }
-        }
-    }
-    if (color == white)
-    {
-        for (int i = 0; i < whiteV.size(); i++)
-        {
-            if (whiteV[i].AllowedMoves(x, y, whiteV, blackV, color, 0) == true)
-            {
-                return whiteV[i];
-            }
-        }
-    }
-    return blackV[0];
-}
-
-bool ChessPieces::Mate(vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV, Color color)
-{
-    Matrix mate_matrix;
-    if (color == white) {
-        for (int o = 0; o < blackV.size(); o++) {
-            mate_matrix = blackV[o].AllowedMoves(whiteV, blackV, black, 0);
-            blackV[o].AllowedMoves(mate_matrix, whiteV, blackV);
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
-                    if (mate_matrix[i][j] == true) {
-                        return false;
-                    }
-                }
-            }
-            mate_matrix.clear();
-        }
-    }
-    if (color == black) {
-        for (int o = 0; o < whiteV.size(); o++) {
-            mate_matrix = whiteV[o].AllowedMoves(whiteV, blackV, black, 0);
-            whiteV[o].AllowedMoves(mate_matrix, whiteV, blackV);
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
-                    if (mate_matrix[i][j] == true) {
-                        return false;
-                    }
-                }
-            }
-            mate_matrix.clear();
-        }
-    } 
-    return true;
-}
-
-void ChessPieces::Take(int x, int y, vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV, Color color, string& str) {
-    if (color == white) {
-        for (size_t i = 0; i < blackV.size(); i++) {
-            if (blackV[i].X == x && blackV[i].Y == y) {
-                str = blackV[i].ID;
-                str.pop_back();
-                str.pop_back();
-                blackV.erase(blackV.begin() + i);
-            }
-        }
-    }
-    if (color == black) {
-        for (size_t i = 0; i < whiteV.size(); i++) {
-            if (whiteV[i].X == x && whiteV[i].Y == y) {
-                str = whiteV[i].ID;
-                str.pop_back();
-                str.pop_back();
-                whiteV.erase(whiteV.begin() + i);
-            }
-        }
-    }
-}
-
-void ChessPieces::Promotion() {
-    Interface::Promotion(*this);
-};
-
-void ChessPieces::QBR(int c, Matrix& matrix, vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV) {
-    vector< ChessPieces > all;
-    for (int i = 0; i < whiteV.size(); i++) {
-        if (X == whiteV[i].X && Y == whiteV[i].Y) {}
-        else {
-            all.push_back(whiteV[i]);
-        }
-    }
-    for (int i = 0; i < blackV.size(); i++) {
-        if (X == blackV[i].X && Y == blackV[i].Y) {}
-        else {
-            all.push_back(blackV[i]);
-        }
-    }
-    if (c == 0) {
-        for (int o = 1; o < 9 - X; o++)
-        {
-            for (int a = 0; a < all.size(); a++)
-            {
-                matrix[X + o - 1][Y - 1] = true;
-                if (all[a].X == X + o && all[a].Y == Y)
-                {
-                    //matrix[X + o][Y] = false;
-                    return;
-                }
-            }
-        }
-    }
-    if (c == 1) {
-        for (int o = 1; o < X; o++)
-        {
-            for (int a = 0; a < all.size(); a++)
-            {
-                matrix[X - o - 1][Y - 1] = true;
-                if (all[a].X == X - o && all[a].Y == Y)
-                {
-                    //matrix[X - o][Y] = false;
-                    return;
-                }
-            }
-        }
-    }
-    if (c == 2) {
-        for (int o = 1; o < 9 - Y; o++)
-        {
-            for (int a = 0; a < all.size(); a++)
-            {
-                matrix[X - 1][Y + o - 1] = true;
-                if (all[a].X == X && all[a].Y == Y + o)
-                {
-                    //matrix[X][Y + o] = false;
-                    return;
-                }
-            }
-        }
-    }
-    if (c == 3) {
-        for (int o = 1; o < Y; o++)
-        {
-            for (int a = 0; a < all.size(); a++)
-            {
-                matrix[X - 1][Y - o - 1] = true;
-                if (all[a].X == X && all[a].Y == Y - o)
-                {
-                    //matrix[X][Y - o] = false;
-                    return;
-                }
-            }
-        }
-    }
-    if (c == 4) {
-        for (int o = 1; o < 9; o++)
-        {
-            for (int a = 0; a < all.size(); a++)
-            {
-                if (X + o > 8 || Y + o > 8) {
-                    return;
-                }
-                matrix[X + o - 1][Y + o - 1] = true;
-                if (all[a].X == X + o && all[a].Y == Y + o)
-                {
-                    //matrix[X + o][Y] = false;
-                    return;
-                }
-            }
-        }
-    }
-    if (c == 5) {
-        for (int o = 1; o < 9; o++)
-        {
-            for (int a = 0; a < all.size(); a++)
-            {
-                if (X - o < 1 || Y - o < 1) {
-                    return;
-                }
-                matrix[X - o - 1][Y - o - 1] = true;
-                if (all[a].X == X - o && all[a].Y == Y - o)
-                {
-                    //matrix[X + o][Y] = false;
-                    return;
-                }
-            }
-        }
-    }
-    if (c == 6) {
-        for (int o = 1; o < 9; o++)
-        {
-            for (int a = 0; a < all.size(); a++)
-            {
-                if (X + o > 8 || Y - o < 1) {
-                    return;
-                }
-                matrix[X + o - 1][Y - o - 1] = true;
-                if (all[a].X == X + o && all[a].Y == Y - o)
-                {
-                    //matrix[X + o][Y] = false;
-                    return;
-                }
-            }
-        }
-    }
-    if (c == 7) {
-        for (int o = 1; o < 9; o++)
-        {
-            for (int a = 0; a < all.size(); a++)
-            {
-                if (X - o < 1 || Y + o > 8) {
-                    return;
-                }
-                matrix[X - o - 1][Y + o - 1] = true;
-                if (all[a].X == X - o && all[a].Y == Y + o)
-                {
-                    //matrix[X + o][Y] = false;
-                    return;
-                }
-            }
-        }
-    }
-}
-Matrix ChessPieces::AllowedMoves(vector<ChessPieces>& white, vector<ChessPieces>& black, Color color, int use) {
-    vector<bool> vec {false, false, false, false, false, false, false, false };
-    Matrix moves {vec,vec,vec,vec,vec,vec,vec,vec };
-    //vec.resize(8);
-    //for (int i = 0; i < 8; i++) {
-    //   vec.push_back(false);
-    //}
-    //for (int i = 0; i < 8; i++) {
-    //    moves.push_back(vec);
-    //}
-    int x, y;
-    x = X - 1;
-    y = Y - 1;
-    if (this->fType == queen || this->fType == rook)
-    {
-        this->QBR(0, moves, white, black);
-        this->QBR(1, moves, white, black);
-        this->QBR(2, moves, white, black);
-        this->QBR(3, moves, white, black);
-
-        if (this->fType == rook) {
-            return moves;
-        }
-    }
-    if (this->fType == queen || this->fType == bishop)
-    {
-        this->QBR(4, moves, white, black);
-        this->QBR(5, moves, white, black);
-        this->QBR(6, moves, white, black);
-        this->QBR(7, moves, white, black);
-        return moves;
-    }
-    if (this->fType == king)
-    {
-        if (y + 1 < 8) {
-            moves[x][y + 1] = true;
-        }
-        if (y - 1 > -1) {
-            moves[x][y - 1] = true;
-        }
-        if (x + 1 < 8) {
-            moves[x + 1][y] = true;
-        }
-        if (x - 1 > -1) {
-            moves[x - 1][y] = true;
-        }
-        if ((x + 1 < 8) && (y + 1 < 8)) {
-            moves[x + 1][y + 1] = true;
-        }
-        if ((x - 1 > -1) && (y - 1 > -1)) {
-            moves[x - 1][y - 1] = true;
-        }
-        if ((x + 1 < 8) && (y - 1 > -1)) {
-            moves[x + 1][y - 1] = true;
-        }
-        if ((x - 1 > -1) && (y + 1 < 8)) {
-            moves[x - 1][y + 1] = true;
-        }
-        return moves;
-    }
-    if (fType == knight)
-    {
-        if ((x + 2 < 8) && (y + 1 < 8)) {
-            moves[x + 2][y + 1] = true;
-        }
-        if ((x - 2 > -1) && (y - 1 > -1)) {
-            moves[x - 2][y - 1] = true;
-        }
-        if ((x + 2 < 8) && (y - 1 > -1)) {
-            moves[x + 2][y - 1] = true;
-        }
-        if ((x - 2 > -1) && (y + 1 < 8)) {
-            moves[x - 2][y + 1] = true;
-        }
-        if ((x + 1 < 8) && (y + 2 < 8)) {
-            moves[x + 1][y + 2] = true;
-        }
-        if ((x - 1 > -1) && (y - 2 > -1)) {
-            moves[x - 1][y - 2] = true;
-        }
-        if ((x + 1 < 8) && (y - 2 > -1)) {
-            moves[x + 1][y - 2] = true;
-        }
-        if ((x - 1 > -1) && (y + 2 < 8)) {
-            moves[x - 1][y + 2] = true;
-        }
-        return moves;
-
-
-    }
-    if (fType == pone)
-    {
-        if (use == 0)
-        {
-            if (color == 0)
-            {
-                if (!enPassant.empty()) {
-                    int ep = enPassant[1] - 96;
-                    if (X + 1 == ep || X - 1 == ep) {
-                        if (Y == 5) {
-                            moves[ep - 1][5] = true;
-                        }
-                    }
-                }
-                moves[x][y + 1] = true;
-                for (int i = 0; i < black.size(); i++)
-                {
-                    if (black[i].X == x + 1 && black[i].Y == y + 1 + 1)
-                    {
-                        moves[x][y + 1] = false;
-                    }
-                }
-                for (int i = 0; i < white.size(); i++)
-                {
-                    if (white[i].X == x + 1 && white[i].Y == y + 1 + 1)
-                    {
-                        moves[x][y + 1] = false;
-                    }
-                }
-                for (int i = 0; i < black.size(); i++)
-                {
-                    if (black[i].X == x - 1 + 1 && black[i].Y == y + 1 + 1)
-                    {
-                        moves[x - 1][y + 1] = true;
-                    }
-                    if (black[i].X == x + 1 + 1 && black[i].Y == y + 1 + 1)
-                    {
-                        moves[x + 1][y + 1] = true;
-                    }
-                }
-                if (y == 1)
-                {
-                    moves[x][y + 2] = true;
-                    for (int i = 0; i < black.size(); i++)
-                    {
-                        if (black[i].X == x + 1 && black[i].Y == y + 2 + 1)
-                        {
-                            moves[x][y + 2] = false;
-                        }
-                        if (black[i].X == x + 1 && black[i].Y == y + 1 + 1)
-                        {
-                            moves[x][y + 2] = false;
-                        }
-
-                    }
-                    for (int i = 0; i < white.size(); i++)
-                    {
-                        if (white[i].X == x + 1 && white[i].Y == y + 2 + 1)
-                        {
-                            moves[x][y + 2] = false;
-                        }
-                        if (white[i].X == x + 1 && white[i].Y == y + 1 + 1)
-                        {
-                            moves[x][y + 2] = false;
-                        }
-                    }
-                }
-            }
-            if (color == 1)
-            {
-                if (!enPassant.empty()) {
-                    int ep = enPassant[1] - 96;
-                    if (X + 1 == ep || X - 1 == ep) {
-                        if (Y == 4) {
-                            moves[ep - 1][3] = true;
-                        }
-                    }
-                }
-                moves[x][y - 1] = true;
-                for (int i = 0; i < white.size(); i++)
-                {
-                    if (white[i].X == x + 1 && white[i].Y == y - 1 + 1)
-                    {
-                        moves[x][y - 1] = false;
-                    }
-                }
-                for (int i = 0; i < black.size(); i++)
-                {
-                    if (black[i].X == x + 1 && black[i].Y == y - 1 + 1)
-                    {
-                        moves[x][y - 1] = false;
-                    }
-                }
-                for (int i = 0; i < white.size(); i++)
-                {
-                    if (white[i].X == x - 1 + 1 && white[i].Y == y - 1 + 1)
-                    {
-                        moves[x - 1][y - 1] = true;
-                    }
-                    if (white[i].X == x + 1 + 1 && white[i].Y == y - 1 + 1)
-                    {
-                        moves[x + 1][y - 1] = true;
-                    }
-                }
-                if (y == 6)
-                {
-                    moves[x][y - 2] = true;
-                    for (int i = 0; i < white.size(); i++)
-                    {
-                        if (white[i].X == x + 1 && white[i].Y == y - 2 + 2)
-                        {
-                            moves[x][y - 2] = false;
-                        }
-                        if (white[i].X == x + 1 && white[i].Y == y - 2 + 1)
-                        {
-                            moves[x][y - 2] = false;
-                        }
-                    }
-                    for (int i = 0; i < black.size(); i++)
-                    {
-                        if (black[i].X == x + 1 && black[i].Y == y - 2 + 2)
-                        {
-                            moves[x][y - 2] = false;
-                        }
-                        if (black[i].X == x + 1 && black[i].Y == y - 2 + 1)
-                        {
-                            moves[x][y - 2] = false;
-                        }
-                    }
-                }
-            }
-            return moves;
-        }
-        else
-        {
-            if (color == 0)
-            {
-                if (x + 1 < 8) {
-                    moves[x + 1][y + 1] = true;
-                }
-                if (x - 1 > -1) {
-                    moves[x - 1][y + 1] = true;
-                }
-            }
-            if (color == 1)
-            {
-                if (x + 1 < 8) {
-                    moves[x + 1][y - 1] = true;
-                }
-                if (x - 1 > -1) {
-                    moves[x - 1][y - 1] = true;
-                }
-            }
-        }
-        return moves;
-    }
-    return moves;
-}
-void ChessPieces::AllowedMoves(Matrix& matrix, vector<ChessPieces>& whiteV, vector<ChessPieces>& blackV) {
-    for (int i = 0; i < 8; i++) {
-        for (int o = 0; o < 8; o++) {
-            if (fColor == white && !AllowedMovesKing(whiteV[0].X, whiteV[0].Y, whiteV, blackV, black)) {
-                ChessPieces check = TypeOfPieces(whiteV[0].X, whiteV[0].Y, whiteV, blackV, black);
-                int a{}, b{};
-                a = check.X;
-                b = check.Y;
-                if (fType == king) {
-                    if (matrix[i][o] == true) {
-                        if (AllowedMovesKing(i + 1, o + 1, whiteV, blackV, black) == false) {
-                            matrix[i][o] = false;
-                        }
-                    }
-                }
-                if (fType != king && this->Block(i + 1, o + 1, whiteV, blackV, fColor, 1) == false) {
-                    matrix[i][o] = false;
-                }
-                if (fColor == white && AllowedMoves(i + 1, o + 1, whiteV) == false) {
-                    matrix[i][o] = false;
-                }
-                if (fType != king) {
-                    if (this->Cover(i + 1, o + 1, check, whiteV[0], whiteV, blackV) == true || (i + 1 == a && o + 1 == b)) {
-
-                    }
-                    else {
-                        matrix[i][o] = false;
-                    }
-                }
-            }
-            if (fColor == black && !AllowedMovesKing(blackV[0].X, blackV[0].Y, whiteV, blackV, white)) {
-                ChessPieces check = TypeOfPieces(blackV[0].X, blackV[0].Y, whiteV, blackV, white);
-                int a{}, b{};
-                a = check.X;
-                b = check.Y;
-                if (fType == king) {
-                    if (matrix[i][o] == true) {
-                        if (AllowedMovesKing(i + 1, o + 1, whiteV, blackV, white) == false) {
-                            matrix[i][o] = false;
-                        }
-                    }
-                }
-                if (fType != king && this->Block(i + 1, o + 1, whiteV, blackV, fColor, 1) == false) {
-                    matrix[i][o] = false;
-                }
-                if (fColor == black && AllowedMoves(i + 1, o + 1, blackV) == false) {
-                    matrix[i][o] = false;
-                }
-                if (fType != king) {
-                    if (this->Cover(i + 1, o + 1, check, blackV[0], whiteV, blackV) == true || (i + 1 == a && o + 1 == b)) {
-
-                    }
-                    else {
-                        matrix[i][o] = false;
-                    }
-                }
-            }
-            if (fType == king) {
-                if (matrix[i][o] == true) {
-                    Color ffColor {white};
-                    if (fColor == white) {
-                        if (castleLW == true && CastleL(3, 1, whiteV, blackV, fColor) == true) {
-                            if (matrix[2][0] == false) {
-                                matrix[2][0] = true;
-                            }
-                        }
-                        if (castleRW == true && Castle(7, 1, whiteV, blackV, fColor) == true) {
-                            if (matrix[6][0] == false) {
-                                matrix[6][0] = true;
-                            }
-                        }
-                        ffColor = black;
-                    }
-                    if (fColor == black) {
-                        if (castleLB == true && CastleL(3, 8, whiteV, blackV, fColor) == true) {
-                            if (matrix[2][7] == false) {
-                                matrix[2][7] = true;
-                            }
-                        }
-                        if (castleRB == true && Castle(7, 8, whiteV, blackV, fColor) == true) {
-                            if (matrix[6][7] == false) {
-                                matrix[6][7] = true;
-                            }
-                        }
-                        ffColor = white;
-                    }
-                    if (AllowedMovesKing(i + 1, o + 1, whiteV, blackV, ffColor) == false) {
-                        matrix[i][o] = false;
-                    }
-                }
-            }
-            if (fType != king && this->Block(i + 1, o + 1, whiteV, blackV, fColor, 0) == false) {
-                matrix[i][o] = false;
-            }
-            if (fColor == white && AllowedMoves(i + 1, o + 1, whiteV) == false) {
-                matrix[i][o] = false;
-            }
-            if (fColor == black && AllowedMoves(i + 1, o + 1, blackV) == false) {
-                matrix[i][o] = false;
-            }
-        }
-    }
-}
-vector<string> ChessPieces::AllowedMoves(Matrix& matrix) {
-    vector<string> vec;
-    for (int i = 0; i < 8; i++) {
-        for (int o = 0; o < 8; o++) {
-            if (matrix[i][o] == true) {
-                char c1 = i + 1 + 96;
-                char c2 = o + 1 + 48;
-                string str;
-                str.push_back(c1);
-                str.push_back(c2);
-                vec.push_back(str);
-            }
-        }
-    }
-    return vec;
 }

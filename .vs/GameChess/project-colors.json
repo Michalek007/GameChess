@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "ded60230-320b-47d5-954c-8cb1405af966": {
+      "ProjectGuid": "ded60230-320b-47d5-954c-8cb1405af966",
+      "DisplayName": "GameChess",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}
